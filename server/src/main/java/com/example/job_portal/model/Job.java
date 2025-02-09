@@ -14,6 +14,10 @@ public class Job {
     private String description;
     private String company;
 
+    @ManyToOne
+    @JoinColumn(name = "owner_id", nullable = false) 
+    private User owner;
+
     public Job() {}
 
     public Job(String title, String description, String company) {
@@ -34,4 +38,7 @@ public class Job {
 
     public String getCompany() { return company; }
     public void setCompany(String company) { this.company = company; }
+
+    public User getOwner() { return owner; }
+    public void setOwner(User owner) { this.owner = owner; }
 }

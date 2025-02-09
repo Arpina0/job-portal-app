@@ -48,6 +48,7 @@ public class JobController {
             return ResponseEntity.status(403).body("Only RECRUITER users can post job listings!");
         }
     
+        job.setOwner(user.get());
         // Save the job listing
         return ResponseEntity.ok(jobRepository.save(job));
     }
