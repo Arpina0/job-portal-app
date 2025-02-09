@@ -14,11 +14,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) // Disable CSRF for stateless APIs
-            .cors(cors -> cors.configure(http)) // Enable CORS
+            .csrf(csrf -> csrf.disable()) // ✅ Disable CSRF
+            .cors(cors -> cors.disable()) // ✅ Disable CORS for now
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/jobs").permitAll() // Allow public access
-                .anyRequest().authenticated() // Secure all other requests
+                .requestMatchers("/**").permitAll() // ✅ Temporarily allow all endpoints
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)); // Stateless session
 
