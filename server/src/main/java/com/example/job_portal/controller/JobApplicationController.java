@@ -21,4 +21,10 @@ public class JobApplicationController {
     public ResponseEntity<?> applyForJob(@RequestHeader("Authorization") String token, @PathVariable Long jobId) {
         return jobApplicationService.applyForJob(token, jobId);
     }
+
+    @GetMapping
+    public ResponseEntity<?> getUserApplications(@RequestHeader("Authorization") String token) {
+    return jobApplicationService.getUserApplications(token);
+    }
+
 }

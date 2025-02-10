@@ -1,9 +1,12 @@
 package com.example.job_portal.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "jobs")
+@JsonIgnoreProperties({"owner", "applications"}) // Prevents recursion issues
 public class Job {
 
     @Id

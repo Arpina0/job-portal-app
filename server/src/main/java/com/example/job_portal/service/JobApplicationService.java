@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.List;
+
 
 @Service
 public class JobApplicationService {
@@ -58,4 +60,19 @@ public class JobApplicationService {
         jobApplicationRepository.save(application);
         return ResponseEntity.ok("Job application submitted successfully.");
     }
+
+    public ResponseEntity<?> getUserApplications(String token) {
+        String username = jwtUtil.extractUsername(token.replace("Bearer ", ""));
+        Optional<User> userOpt = userRepository.findByUsername(username);
+    
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
+        }
+    
+        User user = userOpt.get();
+        List<JobApplication> applications = jobApplicationRepository.findByApplicant(user);
+        
+        return ResponseEntity.ok(applications);
+    }
+    
 }
