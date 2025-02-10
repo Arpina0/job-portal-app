@@ -1,15 +1,14 @@
 import { useState, FormEvent } from 'react';
-import { register, RegisterData, UserRole } from '../services/api';
+import { login, LoginData } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
-const Register = () => {
-  const [formData, setFormData] = useState<RegisterData>({
+const Login = () => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState<LoginData>({
     username: '',
-    email: '',
     password: '',
-    role: 'JOB_SEEKER'
   });
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -17,34 +16,23 @@ const Register = () => {
     setIsLoading(true);
     setError(null);
     try {
-      console.log('Submitting form data:', formData);
-      
-      // The role is already in the correct format, no need to transform it
-      const response = await register(formData);
-      
-      console.log('Registration successful! Token:', response.token);
-      setSuccess('Registration successful! Please check your email to verify your account.');
-      // Clear form after successful registration
-      setFormData({
-        username: '',
-        email: '',
-        password: '',
-        role: 'JOB_SEEKER'
-      });
+      console.log('Submitting login data:', formData);
+      const response = await login(formData);
+      console.log('Login successful! Token:', response.token);
+      localStorage.setItem('token', response.token);
+      navigate('/');
     } catch (err) {
-      console.error('Registration error:', err);
-      setError(err instanceof Error ? err.message : 'Registration failed');
-      setSuccess(null);
+      console.error('Login error:', err);
+      setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const value = e.target.name === 'role' ? e.target.value as UserRole : e.target.value;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: value
+      [e.target.name]: e.target.value
     }));
   };
 
@@ -53,22 +41,19 @@ const Register = () => {
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-md">
         <div>
           <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
-            Create your account
+            Sign in to your account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Join our job portal to find your next opportunity
+            Or{' '}
+            <a href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
+              create a new account
+            </a>
           </p>
         </div>
         
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
             {error}
-          </div>
-        )}
-        
-        {success && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
-            {success}
           </div>
         )}
 
@@ -90,21 +75,6 @@ const Register = () => {
               />
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Enter your email"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Password
               </label>
@@ -114,25 +84,10 @@ const Register = () => {
                 type="password"
                 required
                 className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Create a password"
+                placeholder="Enter your password"
                 value={formData.password}
                 onChange={handleChange}
               />
-            </div>
-            <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700">
-                I am a
-              </label>
-              <select
-                id="role"
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="mt-1 block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="JOB_SEEKER">Job Seeker</option>
-                <option value="RECRUITER">Recruiter</option>
-              </select>
             </div>
           </div>
 
@@ -144,7 +99,7 @@ const Register = () => {
                 ${isLoading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'} 
                 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
             >
-              {isLoading ? 'Registering...' : 'Register'}
+              {isLoading ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
         </form>
@@ -153,4 +108,4 @@ const Register = () => {
   );
 };
 
-export default Register; 
+export default Login; 
