@@ -1,9 +1,13 @@
 import { useState, FormEvent } from 'react';
 import { login, LoginData } from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { fetchUserData } from '../store/slices/userSlice';
+import type { AppDispatch } from '../store';
 
 const Login = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
   const [formData, setFormData] = useState<LoginData>({
     username: '',
     password: '',
@@ -20,6 +24,7 @@ const Login = () => {
       const response = await login(formData);
       console.log('Login successful! Token:', response.token);
       localStorage.setItem('token', response.token);
+      await dispatch(fetchUserData()).unwrap();
       navigate('/');
     } catch (err) {
       console.error('Login error:', err);
