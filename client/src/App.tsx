@@ -1,10 +1,21 @@
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Navigation from './components/Navigation';
+import Home from './components/Home';
 import Register from './components/Register';
 
 function App() {
   return (
-    <div>
-      <Register />
-    </div>
+    <Router>
+      <div className="min-h-screen bg-gray-100">
+        <Navigation />
+        <main className="mt-10">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/register" element={<Register />} />
+          </Routes>
+        </main>
+      </div>
+    </Router>
   );
 }
 
