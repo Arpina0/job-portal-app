@@ -1,0 +1,24 @@
+package com.example.job_portal.controller;
+
+import com.example.job_portal.service.JobApplicationService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/applications")
+@CrossOrigin
+public class JobApplicationController {
+
+    private final JobApplicationService jobApplicationService;
+
+    @Autowired
+    public JobApplicationController(JobApplicationService jobApplicationService) {
+        this.jobApplicationService = jobApplicationService;
+    }
+
+    @PostMapping("/{jobId}")
+    public ResponseEntity<?> applyForJob(@RequestHeader("Authorization") String token, @PathVariable Long jobId) {
+        return jobApplicationService.applyForJob(token, jobId);
+    }
+}
