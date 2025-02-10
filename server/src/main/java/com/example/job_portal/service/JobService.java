@@ -27,10 +27,34 @@ public class JobService {
         this.jwtUtil = jwtUtil;
     }
 
+    /**
+     * Retrieves all available job listings.
+     * @return List of all jobs.
+     */
     public List<Job> getAllJobs() {
         return jobRepository.findAll();
     }
 
+    /**
+     * Retrieves a job by its ID.
+     * @param id Job ID.
+     * @return Job details or 404 if not found.
+     */
+    public ResponseEntity<?> getJobById(Long id) {
+        Optional<Job> jobOpt = jobRepository.findById(id);
+        if (jobOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Job not found");
+        }
+        return ResponseEntity.ok(jobOpt.get()); 
+    }
+    
+
+    /**
+     * Creates a new job listing (Only for RECRUITER users).
+     * @param token Authorization token.
+     * @param job Job details.
+     * @return Created job or error message.
+     */
     public ResponseEntity<?> createJob(String token, Job job) {
         String username = jwtUtil.extractUsername(token.replace("Bearer ", ""));
         Optional<User> user = userRepository.findByUsername(username);
@@ -40,34 +64,67 @@ public class JobService {
         }
 
         job.setOwner(user.get());
-        return ResponseEntity.ok(jobRepository.save(job));
+        jobRepository.save(job);
+        return ResponseEntity.ok("{\"message\": \"Job created successfully\", \"job\": " + job + "}");
     }
 
-    public ResponseEntity<String> deleteJob(Long id, String token) {
-        try {
-            String username = jwtUtil.extractUsername(token.replace("Bearer ", ""));
-            Optional<User> recruiterOpt = userRepository.findByUsername(username);
+    /**
+     * Updates a job listing (Only the owner can update).
+     * @param id Job ID.
+     * @param token Authorization token.
+     * @param jobDetails Updated job details.
+     * @return Updated job or error message.
+     */
+    public ResponseEntity<?> updateJob(Long id, String token, Job jobDetails) {
+        String username = jwtUtil.extractUsername(token.replace("Bearer ", ""));
+        Optional<User> userOpt = userRepository.findByUsername(username);
+        Optional<Job> jobOpt = jobRepository.findById(id);
 
-            if (recruiterOpt.isEmpty() || !recruiterOpt.get().getRole().name().equals("RECRUITER")) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only recruiters can delete jobs.");
-            }
-
-            Optional<Job> jobOpt = jobRepository.findById(id);
-            if (jobOpt.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Job not found.");
-            }
-
-            Job job = jobOpt.get();
-
-            if (!job.getOwner().getUsername().equals(username)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only delete jobs you posted.");
-            }
-
-            jobRepository.delete(job);
-            return ResponseEntity.ok("Job deleted successfully.");
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while deleting the job.");
+        if (userOpt.isEmpty() || jobOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Job or user not found.");
         }
+
+        Job job = jobOpt.get();
+        User user = userOpt.get();
+
+        if (!job.getOwner().getUsername().equals(user.getUsername())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only update your own job listings.");
+        }
+
+        // Ensure jobDetails contains valid data before updating
+        if (jobDetails.getTitle() != null) job.setTitle(jobDetails.getTitle());
+        if (jobDetails.getDescription() != null) job.setDescription(jobDetails.getDescription());
+        if (jobDetails.getLocation() != null) job.setLocation(jobDetails.getLocation());
+        if (jobDetails.getSalary() != null) job.setSalary(jobDetails.getSalary());
+        if (jobDetails.getJobType() != null) job.setJobType(jobDetails.getJobType());
+
+        jobRepository.save(job);
+        return ResponseEntity.ok("Job updated successfully.");
+    }
+
+    /**
+     * Deletes a job listing (Only the owner can delete).
+     * @param id Job ID.
+     * @param token Authorization token.
+     * @return Success or error message.
+     */
+    public ResponseEntity<String> deleteJob(Long id, String token) {
+        String username = jwtUtil.extractUsername(token.replace("Bearer ", ""));
+        Optional<User> userOpt = userRepository.findByUsername(username);
+        Optional<Job> jobOpt = jobRepository.findById(id);
+
+        if (userOpt.isEmpty() || jobOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Job or user not found.");
+        }
+
+        Job job = jobOpt.get();
+        User user = userOpt.get();
+
+        if (!job.getOwner().getUsername().equals(user.getUsername())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only delete your own job listings.");
+        }
+
+        jobRepository.delete(job);
+        return ResponseEntity.ok("Job deleted successfully.");
     }
 }

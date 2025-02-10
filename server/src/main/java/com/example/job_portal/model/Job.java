@@ -13,6 +13,9 @@ public class Job {
     private String title;
     private String description;
     private String company;
+    private String location;
+    private Double salary;
+    private String jobType;
 
     @ManyToOne
     @JoinColumn(name = "owner_id", nullable = false) 
@@ -20,10 +23,13 @@ public class Job {
 
     public Job() {}
 
-    public Job(String title, String description, String company) {
+    public Job(String title, String description, String company, String location, Double salary, String jobType) {
         this.title = title;
         this.description = description;
         this.company = company;
+        this.location = location;
+        this.salary = salary;
+        this.jobType = jobType;
     }
 
     // Getter ve Setter metodları
@@ -41,4 +47,13 @@ public class Job {
 
     public User getOwner() { return owner; }
     public void setOwner(User owner) { this.owner = owner; }
+
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
+
+    public Double getSalary() { return salary; }
+    public void setSalary(Double salary) { this.salary = salary; }
+
+    public String getJobType() { return jobType; }
+    public void setJobType(String jobType) { this.jobType = jobType; }
 }

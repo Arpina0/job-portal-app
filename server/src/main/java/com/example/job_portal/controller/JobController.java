@@ -1,103 +1,75 @@
 package com.example.job_portal.controller;
 
 import com.example.job_portal.model.Job;
-import com.example.job_portal.model.User;
-import com.example.job_portal.repository.JobRepository;
-import com.example.job_portal.repository.UserRepository;
-import com.example.job_portal.security.JwtUtil;
+import com.example.job_portal.service.JobService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/jobs")
 @CrossOrigin
 public class JobController {
 
-    private final JobRepository jobRepository;
-    private final UserRepository userRepository;
-    private final JwtUtil jwtUtil;
+    private final JobService jobService;
 
     @Autowired
-    public JobController(JobRepository jobRepository, UserRepository userRepository, JwtUtil jwtUtil) {
-        this.jobRepository = jobRepository;
-        this.userRepository = userRepository;
-        this.jwtUtil = jwtUtil;
+    public JobController(JobService jobService) {
+        this.jobService = jobService;
     }
 
+    /**
+     * Retrieves all job listings.
+     * @return List of all jobs.
+     */
     @GetMapping
     public List<Job> getAllJobs() {
-        return jobRepository.findAll();
+        return jobService.getAllJobs();
     }
 
+    /**
+     * Retrieves a specific job by its ID.
+     * @param id Job ID.
+     * @return Job details or 404 if not found.
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getJobById(@PathVariable Long id) {
+        return jobService.getJobById(id);
+    }
+
+    /**
+     * Creates a new job listing (Only for users with RECRUITER role).
+     * @param token Authorization token.
+     * @param job Job details.
+     * @return Created job or error message.
+     */
     @PostMapping
     public ResponseEntity<?> createJob(@RequestHeader("Authorization") String token, @RequestBody Job job) {
-        // Extract username from Bearer token
-        String username = jwtUtil.extractUsername(token.replace("Bearer ", ""));
-        Optional<User> user = userRepository.findByUsername(username);
-    
-        // Debugging: Print user details
-        System.out.println("Extracted username: " + username);
-        System.out.println("User role from database: " + (user.isPresent() ? user.get().getRole() : "User not found"));
-    
-        //  Fix role comparison (convert enum to string)
-        if (user.isEmpty() || !user.get().getRole().name().equals("RECRUITER")) {
-            return ResponseEntity.status(403).body("Only RECRUITER users can post job listings!");
-        }
-    
-        job.setOwner(user.get());
-        // Save the job listing
-        return ResponseEntity.ok(jobRepository.save(job));
+        return jobService.createJob(token, job);
     }
 
+    /**
+     * Updates an existing job listing (Only the owner can update).
+     * @param id Job ID.
+     * @param token Authorization token.
+     * @param jobDetails Updated job details.
+     * @return Updated job or error message.
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateJob(@PathVariable Long id, @RequestHeader("Authorization") String token, @RequestBody Job jobDetails) {
+        return jobService.updateJob(id, token, jobDetails);
+    }
+
+    /**
+     * Deletes an existing job listing (Only the owner can delete).
+     * @param id Job ID.
+     * @param token Authorization token.
+     * @return Success or error message.
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteJob(@PathVariable Long id, @RequestHeader("Authorization") String token) {
-        try {
-            // Extract username from JWT token
-            String username = jwtUtil.extractUsername(token.replace("Bearer ", ""));
-            Optional<User> recruiterOpt = userRepository.findByUsername(username);
-    
-            // Log extracted information
-            System.out.println("Extracted username: " + username);
-            recruiterOpt.ifPresent(user -> System.out.println("User role from database: " + user.getRole()));
-    
-            // Validate that the user exists and has RECRUITER role
-            if (recruiterOpt.isEmpty() || !recruiterOpt.get().getRole().name().equals("RECRUITER")) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only recruiters can delete jobs.");
-            }
-    
-            // Fetch job from database
-            Optional<Job> jobOpt = jobRepository.findById(id);
-            if (jobOpt.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Job not found.");
-            }
-    
-            Job job = jobOpt.get();
-    
-            // Log job owner
-            System.out.println("Job owner username: " + job.getOwner().getUsername());
-    
-            // Ensure the recruiter can only delete their own jobs
-            if (!job.getOwner().getUsername().equals(username)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only delete jobs you posted.");
-            }
-    
-            // Delete the job
-            jobRepository.delete(job);
-            return ResponseEntity.ok("Job deleted successfully.");
-    
-        } catch (Exception e) {
-            System.err.println("Error during job deletion: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while deleting the job.");
-        }
+        return jobService.deleteJob(id, token);
     }
-    
-
-    
-    
-    
 }

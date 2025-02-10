@@ -36,7 +36,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String token = authHeader.substring(7); // "Bearer " sonrası kısmı al
+        String token = authHeader.substring(7); 
         try {
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(getSigningKey())
