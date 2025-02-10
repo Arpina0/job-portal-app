@@ -117,5 +117,43 @@ public class JobApplicationService {
         return ResponseEntity.ok(response);
     }
 
+    public ResponseEntity<?> updateApplicationStatus(String token, Long applicationId, String newStatus) {
+        String username = jwtUtil.extractUsername(token.replace("Bearer ", ""));
+        Optional<User> recruiterOpt = userRepository.findByUsername(username);
+    
+        if (recruiterOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
+        }
+    
+        User recruiter = recruiterOpt.get();
+        
+        // ✅ Fetch the application
+        Optional<JobApplication> applicationOpt = jobApplicationRepository.findById(applicationId);
+        if (applicationOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Application not found.");
+        }
+    
+        JobApplication application = applicationOpt.get();
+        Job job = application.getJob();
+    
+        // ✅ Ensure only the job owner (recruiter) can update the status
+        if (!job.getOwner().getUsername().equals(recruiter.getUsername())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only update applications for jobs you posted.");
+        }
+    
+        // ✅ Ensure the new status is valid
+        List<String> validStatuses = List.of("Accepted", "Rejected", "Pending");
+        if (!validStatuses.contains(newStatus)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid status. Allowed values: Accepted, Rejected, Pending.");
+        }
+    
+        // ✅ Update status
+        application.setStatus(newStatus);
+        jobApplicationRepository.save(application);
+    
+        return ResponseEntity.ok("Application status updated successfully.");
+    }
+    
+
     
 }
