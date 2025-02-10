@@ -13,7 +13,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+
 
 
 @Service
@@ -74,5 +78,44 @@ public class JobApplicationService {
         
         return ResponseEntity.ok(applications);
     }
+
+    public ResponseEntity<?> getJobApplications(String token, Long jobId) {
+        String username = jwtUtil.extractUsername(token.replace("Bearer ", ""));
+        Optional<User> recruiterOpt = userRepository.findByUsername(username);
+
+        if (recruiterOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
+        }
+
+        User recruiter = recruiterOpt.get();
+        
+        // ✅ Fetch the job
+        Optional<Job> jobOpt = jobRepository.findById(jobId);
+        if (jobOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Job not found.");
+        }
+
+        Job job = jobOpt.get();
+
+        // ✅ Ensure only the job owner (recruiter) can access applications
+        if (!job.getOwner().getUsername().equals(recruiter.getUsername())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only view applications for jobs you posted.");
+        }
+
+        // ✅ Fetch applications for the job
+        List<JobApplication> applications = jobApplicationRepository.findByJob(job);
+
+        // ✅ Transform response to return structured data
+        List<Map<String, Object>> response = applications.stream().map(application -> {
+            Map<String, Object> data = new HashMap<>();
+            data.put("applicationId", application.getId());
+            data.put("applicantUsername", application.getApplicant().getUsername());
+            data.put("status", application.getStatus());
+            return data;
+        }).toList();
+
+        return ResponseEntity.ok(response);
+    }
+
     
 }
