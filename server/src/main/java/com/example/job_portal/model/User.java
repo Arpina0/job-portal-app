@@ -12,6 +12,9 @@ public class User {
     @Column(unique = true, nullable = false)
     private String username;
 
+    @Column(unique = true, nullable = false)
+    private String email;
+
     @Column(nullable = false)
     private String password;
 
@@ -36,6 +39,10 @@ public class User {
         return role;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
     // ✅ Manually Adding Setters
     public void setId(Long id) {
         this.id = id;
@@ -51,5 +58,9 @@ public class User {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }

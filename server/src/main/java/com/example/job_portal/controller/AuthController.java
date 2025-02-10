@@ -21,6 +21,12 @@ public class AuthController {
      */
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody User user) {
+        // Comprehensive email validation using regex
+        String emailRegex = "^[A-Za-z0-9+_.-]+@(.+)\\.[A-Za-z]{2,}$";
+        if (user.getEmail() == null || !user.getEmail().matches(emailRegex)) {
+            return ResponseEntity.badRequest().body("Invalid email format. Please provide a valid email address");
+        }
+        
         String response = authService.register(user);
         return ResponseEntity.ok(response);
     }
@@ -32,9 +38,19 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody User loginRequest) {
+        if (loginRequest.getUsername() == null || loginRequest.getPassword() == null) {
+            return ResponseEntity.badRequest().body("Username and password are required");
+        }
+
         return authService.login(loginRequest)
-                .map(token -> ResponseEntity.ok().body("{\"token\": \"" + token + "\"}"))
-                .orElseGet(() -> ResponseEntity.status(401).body("Invalid credentials"));
+                .map(token -> {
+                    // Create a proper JSON response
+                    return ResponseEntity.ok()
+                            .header("Content-Type", "application/json")
+                            .body("{\"token\":\"" + token + "\"}");
+                })
+                .orElseGet(() -> ResponseEntity.status(401)
+                        .body("{\"error\":\"Invalid credentials\"}"));
     }
 
     /**

@@ -43,13 +43,22 @@ public class AuthService {
      * @return Optional JWT token if authentication is successful.
      */
     public Optional<String> login(User loginRequest) {
+        System.out.println("Login attempt for username: " + loginRequest.getUsername()); // Debug log
+        
         Optional<User> user = userRepository.findByUsername(loginRequest.getUsername());
-
-        if (user.isPresent() && passwordEncoder.matches(loginRequest.getPassword(), user.get().getPassword())) {
+        
+        if (!user.isPresent()) {
+            System.out.println("User not found"); // Debug log
+            return Optional.empty();
+        }
+        
+        if (passwordEncoder.matches(loginRequest.getPassword(), user.get().getPassword())) {
             String token = jwtUtil.generateToken(user.get().getUsername());
+            System.out.println("Login successful, token generated"); // Debug log
             return Optional.of(token);
         }
-
+        
+        System.out.println("Password mismatch"); // Debug log
         return Optional.empty();
     }
 
@@ -74,6 +83,7 @@ public class AuthService {
         Map<String, Object> userDetails = new HashMap<>();
         userDetails.put("id", user.getId());
         userDetails.put("username", user.getUsername());
+        userDetails.put("email", user.getEmail());
         userDetails.put("role", user.getRole().name());
 
         return ResponseEntity.ok(userDetails);
