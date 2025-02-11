@@ -98,10 +98,12 @@ const JobDetails = () => {
             {selectedJob.location || 'Location not specified'}
           </div>
 
-          {selectedJob.salary && (
+          {selectedJob.minSalary !== undefined && selectedJob.maxSalary !== undefined && (
             <div className="mb-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-2">Salary</h2>
-              <p className="text-gray-600">{selectedJob.salary}</p>
+              <p className="text-gray-600">
+                {selectedJob.minSalary} - {selectedJob.maxSalary}
+              </p>
             </div>
           )}
 

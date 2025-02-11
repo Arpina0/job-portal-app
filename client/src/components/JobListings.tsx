@@ -19,6 +19,14 @@ const JobCard = ({ job }: { job: Job }) => {
           {job.title || 'Untitled Position'}
         </h2>
         <p className="text-gray-600 mb-4">{job.company || 'Company Name'}</p>
+        
+        {/* Display Minimum and Maximum Salary under Company Name */}
+        {job.minSalary !== undefined && job.maxSalary !== undefined && (
+          <p className="mt-1 text-gray-600">
+            Salary: {job.minSalary} - {job.maxSalary}
+          </p>
+        )}
+
         <div className="flex items-center text-gray-500 text-sm mb-4">
           <svg
             className="h-4 w-4 mr-1"
@@ -45,6 +53,7 @@ const JobCard = ({ job }: { job: Job }) => {
         <p className="mt-4 text-gray-600 line-clamp-3">
           {job.description || 'No description available'}
         </p>
+
         <button 
           onClick={() => navigate(`/jobs/${job.id}`)}
           className="mt-4 w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"

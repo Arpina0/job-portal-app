@@ -88,13 +88,16 @@ export interface Job {
   title: string;
   company: string;
   location: string;
+  minSalary?: number;
+  maxSalary?: number;
+  type: string;
+  status: string;
+  postedDate: string;
+  recruiterId: number;
   description: string;
   requirements: string;
-  salary?: string;
-  postedDate: string;
-  type: 'FULL_TIME' | 'PART_TIME' | 'CONTRACT';
-  status: 'OPEN' | 'CLOSED';
 }
+
 
 export const fetchJobs = async (): Promise<Job[]> => {
   try {

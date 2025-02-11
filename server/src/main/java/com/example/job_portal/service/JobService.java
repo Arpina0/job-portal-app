@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,9 +46,8 @@ public class JobService {
         if (jobOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Job not found");
         }
-        return ResponseEntity.ok(jobOpt.get()); 
+        return ResponseEntity.ok(jobOpt.get());
     }
-    
 
     /**
      * Creates a new job listing (Only for RECRUITER users).
@@ -60,16 +60,21 @@ public class JobService {
         Optional<User> user = userRepository.findByUsername(username);
 
         if (user.isEmpty() || !user.get().getRole().name().equals("RECRUITER")) {
-            return ResponseEntity.status(403).body("Only RECRUITER users can post job listings!");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only RECRUITER users can post job listings!");
         }
 
-        job.setOwner(user.get());
+        job.setRecruiter(user.get()); // ✅ Updated from `setOwner` to `setRecruiter`
+
+        // Ensure salary fields are correctly assigned (BigDecimal for PostgreSQL NUMERIC)
+        if (job.getMinSalary() == null) job.setMinSalary(BigDecimal.ZERO);
+        if (job.getMaxSalary() == null) job.setMaxSalary(BigDecimal.ZERO);
+
         jobRepository.save(job);
         return ResponseEntity.ok("{\"message\": \"Job created successfully\", \"job\": " + job + "}");
     }
 
     /**
-     * Updates a job listing (Only the owner can update).
+     * Updates a job listing (Only the recruiter can update).
      * @param id Job ID.
      * @param token Authorization token.
      * @param jobDetails Updated job details.
@@ -87,7 +92,7 @@ public class JobService {
         Job job = jobOpt.get();
         User user = userOpt.get();
 
-        if (!job.getOwner().getUsername().equals(user.getUsername())) {
+        if (!job.getRecruiter().getUsername().equals(user.getUsername())) { // ✅ Updated from `getOwner` to `getRecruiter`
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only update your own job listings.");
         }
 
@@ -95,7 +100,8 @@ public class JobService {
         if (jobDetails.getTitle() != null) job.setTitle(jobDetails.getTitle());
         if (jobDetails.getDescription() != null) job.setDescription(jobDetails.getDescription());
         if (jobDetails.getLocation() != null) job.setLocation(jobDetails.getLocation());
-        if (jobDetails.getSalary() != null) job.setSalary(jobDetails.getSalary());
+        if (jobDetails.getMinSalary() != null) job.setMinSalary(jobDetails.getMinSalary());
+        if (jobDetails.getMaxSalary() != null) job.setMaxSalary(jobDetails.getMaxSalary());
         if (jobDetails.getJobType() != null) job.setJobType(jobDetails.getJobType());
 
         jobRepository.save(job);
@@ -103,7 +109,7 @@ public class JobService {
     }
 
     /**
-     * Deletes a job listing (Only the owner can delete).
+     * Deletes a job listing (Only the recruiter can delete).
      * @param id Job ID.
      * @param token Authorization token.
      * @return Success or error message.
@@ -120,7 +126,7 @@ public class JobService {
         Job job = jobOpt.get();
         User user = userOpt.get();
 
-        if (!job.getOwner().getUsername().equals(user.getUsername())) {
+        if (!job.getRecruiter().getUsername().equals(user.getUsername())) { // ✅ Updated from `getOwner` to `getRecruiter`
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only delete your own job listings.");
         }
 
