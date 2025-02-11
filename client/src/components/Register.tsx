@@ -1,43 +1,35 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { registerUser, clearError } from '../store/slices/authSlice';
+import type { AppDispatch, RootState } from '../store';
 import { register, RegisterData, UserRole } from '../services/api';
 
 const Register = () => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  const { loading, error, registrationSuccess } = useSelector((state: RootState) => state.auth);
+
   const [formData, setFormData] = useState<RegisterData>({
     username: '',
     email: '',
     password: '',
     role: 'JOB_SEEKER'
   });
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    dispatch(clearError());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (registrationSuccess) {
+      navigate('/login');
+    }
+  }, [registrationSuccess, navigate]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-    try {
-      console.log('Submitting form data:', formData);
-      
-      // The role is already in the correct format, no need to transform it
-      const response = await register(formData);
-      
-      console.log('Registration successful! Token:', response.token);
-      setSuccess('Registration successful! Please check your email to verify your account.');
-      // Clear form after successful registration
-      setFormData({
-        username: '',
-        email: '',
-        password: '',
-        role: 'JOB_SEEKER'
-      });
-    } catch (err) {
-      console.error('Registration error:', err);
-      setError(err instanceof Error ? err.message : 'Registration failed');
-      setSuccess(null);
-    } finally {
-      setIsLoading(false);
-    }
+    dispatch(registerUser(formData));
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -66,9 +58,9 @@ const Register = () => {
           </div>
         )}
         
-        {success && (
+        {registrationSuccess && (
           <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
-            {success}
+            Registration successful! Please check your email to verify your account.
           </div>
         )}
 
@@ -139,12 +131,12 @@ const Register = () => {
           <div>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={loading}
               className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white 
-                ${isLoading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'} 
+                ${loading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'} 
                 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
             >
-              {isLoading ? 'Registering...' : 'Register'}
+              {loading ? 'Registering...' : 'Register'}
             </button>
           </div>
         </form>

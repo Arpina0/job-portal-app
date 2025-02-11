@@ -1,37 +1,32 @@
-import { useState, FormEvent } from 'react';
-import { login, LoginData } from '../services/api';
+import { useState, FormEvent, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { fetchUserData } from '../store/slices/userSlice';
-import type { AppDispatch } from '../store';
+import { useDispatch, useSelector } from 'react-redux';
+import { loginUser, clearError } from '../store/slices/authSlice';
+import type { AppDispatch, RootState } from '../store';
 
 const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  const [formData, setFormData] = useState<LoginData>({
+  const { loading, error, isAuthenticated } = useSelector((state: RootState) => state.auth);
+
+  const [formData, setFormData] = useState({
     username: '',
     password: '',
   });
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    dispatch(clearError());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-    try {
-      console.log('Submitting login data:', formData);
-      const response = await login(formData);
-      console.log('Login successful! Token:', response.token);
-      localStorage.setItem('token', response.token);
-      await dispatch(fetchUserData()).unwrap();
-      navigate('/');
-    } catch (err) {
-      console.error('Login error:', err);
-      setError(err instanceof Error ? err.message : 'Login failed');
-    } finally {
-      setIsLoading(false);
-    }
+    dispatch(loginUser(formData));
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,12 +94,12 @@ const Login = () => {
           <div>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={loading}
               className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white 
-                ${isLoading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'} 
+                ${loading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'} 
                 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
             >
-              {isLoading ? 'Signing in...' : 'Sign in'}
+              {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
         </form>

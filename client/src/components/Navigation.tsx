@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
-import { logout } from '../store/slices/userSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { logout } from '../store/slices/authSlice';
 import type { RootState } from '../store';
 
 const Navigation = () => {
   const dispatch = useDispatch();
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const { user } = useSelector((state: RootState) => state.user);
 
   const handleLogout = () => {
@@ -28,7 +29,7 @@ const Navigation = () => {
               >
                 Home
               </Link>
-              {!user ? (
+              {!isAuthenticated ? (
                 <>
                   <Link
                     to="/register"
