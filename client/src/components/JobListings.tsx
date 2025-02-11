@@ -70,6 +70,8 @@ const JobListings = () => {
   const { jobs, loading, error } = useSelector((state: RootState) => state.jobs);
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const navigate = useNavigate();
+  const userRole = useSelector((state: RootState) => state.user.user?.role);
+  console.log('User Role pritn:', userRole);
 
   useEffect(() => {
     console.log('JobListings mounted, authenticated:', isAuthenticated);
@@ -79,6 +81,8 @@ const JobListings = () => {
   }, [dispatch, isAuthenticated]);
 
   console.log('JobListings render state:', { loading, error, jobsCount: jobs.length });
+  console.log('User Role:', userRole);
+  console.log('Is Recruiter:', userRole === 'RECRUITER');
 
   if (loading) {
     return (
@@ -111,16 +115,18 @@ const JobListings = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Job Listings</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-3xl font-bold text-gray-900">Job Listings</h1>
+        {userRole === 'RECRUITER' && (
+          <button
+            onClick={() => navigate('/create-job')}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          >
+            Create New Job
+          </button>
+        )}
+      </div>
       
-      {/* Create Job Button */}
-      <button
-        onClick={() => navigate('/create-job')}
-        className="mb-4 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
-      >
-        Create New Job
-      </button>
-
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {jobs.map((job) => (
           <JobCard key={job.id} job={job} />

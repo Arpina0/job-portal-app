@@ -30,6 +30,7 @@ export const fetchUserData = createAsyncThunk(
           Authorization: `Bearer ${token}`,
         },
       });
+      console.log('Fetched user data:', response.data);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch user data');
