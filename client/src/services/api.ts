@@ -79,7 +79,7 @@ export const login = async (userData: LoginData): Promise<LoginResponse> => {
     return response.data;
   } catch (error: any) {
     console.error('Login error:', error.response?.data);
-    throw new Error(error.response?.data?.message || 'Login failed');
+    throw new Error(error.response?.data?.message || 'Login failed: ' + (error.message || 'Unknown error'));
   }
 };
 
