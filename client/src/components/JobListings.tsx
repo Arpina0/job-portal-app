@@ -3,8 +3,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchAllJobs } from '../store/slices/jobsSlice';
 import type { AppDispatch, RootState } from '../store';
 import type { Job } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 const JobCard = ({ job }: { job: Job }) => {
+  const navigate = useNavigate();
+
   const formatJobType = (type: string) => {
     return type?.replace('_', ' ') || 'FULL TIME';
   };
@@ -42,7 +45,10 @@ const JobCard = ({ job }: { job: Job }) => {
         <p className="mt-4 text-gray-600 line-clamp-3">
           {job.description || 'No description available'}
         </p>
-        <button className="mt-4 w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+        <button 
+          onClick={() => navigate(`/jobs/${job.id}`)}
+          className="mt-4 w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+        >
           View Details
         </button>
       </div>

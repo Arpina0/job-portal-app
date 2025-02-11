@@ -106,4 +106,14 @@ export const fetchJobs = async (): Promise<Job[]> => {
   }
 };
 
+export const fetchJobById = async (id: number): Promise<Job> => {
+  try {
+    const response = await api.get<Job>(`/jobs/${id}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching job details:', error.response?.data);
+    throw new Error(error.response?.data?.message || 'Failed to fetch job details');
+  }
+};
+
 export default api; 

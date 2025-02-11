@@ -5,6 +5,7 @@ import Home from './components/Home';
 import Register from './components/Register';
 import Login from './components/Login';
 import JobListings from './components/JobListings';
+import JobDetails from './components/JobDetails';
 import type { RootState } from './store';
 
 function App() {
@@ -31,6 +32,10 @@ function App() {
             <Route 
               path="/register" 
               element={!isAuthenticated ? <Register /> : <Navigate to="/" />} 
+            />
+            <Route 
+              path="/jobs/:id" 
+              element={isAuthenticated ? <JobDetails /> : <Navigate to="/login" />} 
             />
           </Routes>
         </main>
