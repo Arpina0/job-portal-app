@@ -1,6 +1,7 @@
 package com.example.job_portal.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -35,11 +36,13 @@ public class Job {
     @Column(name = "max_salary", precision = 12, scale = 2)
     private BigDecimal maxSalary; // Matches PostgreSQL's numeric(12,2)
 
-    @Column(name = "type", nullable = false, length = 20)
-    private String jobType; // Maps to PostgreSQL's "type" column
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false)
+    private JobType jobType = JobType.FULL_TIME;
 
-    @Column(name = "status", nullable = false, length = 20, columnDefinition = "VARCHAR(20) DEFAULT 'OPEN'")
-    private String status = "OPEN"; // Default value is 'OPEN'
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private JobStatus status = JobStatus.OPEN;
 
     @Column(name = "posted_date", nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime postedDate = LocalDateTime.now(); // Automatically set to current timestamp
@@ -53,7 +56,8 @@ public class Job {
 
     // Parameterized Constructor
     public Job(String title, String description, String company, String location, String requirements,
-               BigDecimal minSalary, BigDecimal maxSalary, String jobType, String status, User recruiter) {
+               BigDecimal minSalary, BigDecimal maxSalary, @JsonProperty("type") String jobType, 
+               @JsonProperty("status") String status, User recruiter) {
         this.title = title;
         this.description = description;
         this.company = company;
@@ -61,8 +65,8 @@ public class Job {
         this.requirements = requirements;
         this.minSalary = minSalary;
         this.maxSalary = maxSalary;
-        this.jobType = jobType;
-        this.status = status;
+        this.jobType = jobType != null ? JobType.valueOf(jobType) : JobType.FULL_TIME;
+        this.status = status != null ? JobStatus.valueOf(status) : JobStatus.OPEN;
         this.recruiter = recruiter;
     }
 
@@ -91,15 +95,36 @@ public class Job {
     public BigDecimal getMaxSalary() { return maxSalary; }
     public void setMaxSalary(BigDecimal maxSalary) { this.maxSalary = maxSalary; }
 
-    public String getJobType() { return jobType; }
-    public void setJobType(String jobType) { this.jobType = jobType; }
+    public JobType getJobType() { return jobType; }
+    public void setJobType(JobType jobType) { this.jobType = jobType; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public JobStatus getStatus() { return status; }
+    public void setStatus(JobStatus status) { this.status = status; }
 
     public LocalDateTime getPostedDate() { return postedDate; }
     public void setPostedDate(LocalDateTime postedDate) { this.postedDate = postedDate; }
 
     public User getRecruiter() { return recruiter; }
     public void setRecruiter(User recruiter) { this.recruiter = recruiter; }
+
+    // Add these methods for JSON serialization/deserialization
+    @JsonProperty("type")
+    public String getJobTypeString() {
+        return jobType != null ? jobType.name() : null;
+    }
+
+    @JsonProperty("type")
+    public void setJobTypeString(String type) {
+        this.jobType = type != null ? JobType.valueOf(type) : JobType.FULL_TIME;
+    }
+
+    @JsonProperty("status")
+    public String getStatusString() {
+        return status != null ? status.name() : null;
+    }
+
+    @JsonProperty("status")
+    public void setStatusString(String status) {
+        this.status = status != null ? JobStatus.valueOf(status) : JobStatus.OPEN;
+    }
 }

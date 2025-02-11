@@ -12,10 +12,20 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.example.job_portal.repository.UserRepository;
+import org.springframework.http.HttpMethod;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    private final UserRepository userRepository;
+
+    @Autowired
+    public SecurityConfig(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -24,11 +34,14 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
-                .requestMatchers("/api/jobs").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/jobs/**").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/jobs/**").hasAuthority("RECRUITER")
+                .requestMatchers(HttpMethod.PUT, "/api/jobs/**").hasAuthority("RECRUITER")
+                .requestMatchers(HttpMethod.DELETE, "/api/jobs/**").hasAuthority("RECRUITER")
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .addFilterBefore(new JwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(new JwtAuthenticationFilter(userRepository), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

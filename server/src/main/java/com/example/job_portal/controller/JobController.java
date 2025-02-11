@@ -4,6 +4,8 @@ import com.example.job_portal.model.Job;
 import com.example.job_portal.service.JobService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -47,6 +49,12 @@ public class JobController {
      */
     @PostMapping
     public ResponseEntity<?> createJob(@RequestHeader("Authorization") String token, @RequestBody Job job) {
+        // Add these debug lines
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        System.out.println("Current user: " + authentication.getName());
+        System.out.println("Authorities: " + authentication.getAuthorities());
+        System.out.println("Is authenticated: " + authentication.isAuthenticated());
+        
         return jobService.createJob(token, job);
     }
 

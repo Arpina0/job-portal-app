@@ -98,7 +98,7 @@ public class JobApplicationService {
         Job job = jobOpt.get();
 
         // ✅ Ensure only the job owner (recruiter) can access applications
-        if (!job.getOwner().getUsername().equals(recruiter.getUsername())) {
+        if (!job.getRecruiter().getUsername().equals(recruiter.getUsername())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only view applications for jobs you posted.");
         }
 
@@ -137,7 +137,7 @@ public class JobApplicationService {
         Job job = application.getJob();
     
         // ✅ Ensure only the job owner (recruiter) can update the status
-        if (!job.getOwner().getUsername().equals(recruiter.getUsername())) {
+        if (!job.getRecruiter().getUsername().equals(recruiter.getUsername())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only update applications for jobs you posted.");
         }
     

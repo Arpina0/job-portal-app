@@ -69,6 +69,7 @@ const JobListings = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { jobs, loading, error } = useSelector((state: RootState) => state.jobs);
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const navigate = useNavigate();
 
   useEffect(() => {
     console.log('JobListings mounted, authenticated:', isAuthenticated);
@@ -111,6 +112,15 @@ const JobListings = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-3xl font-bold text-gray-900 mb-8">Job Listings</h1>
+      
+      {/* Create Job Button */}
+      <button
+        onClick={() => navigate('/create-job')}
+        className="mb-4 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+      >
+        Create New Job
+      </button>
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {jobs.map((job) => (
           <JobCard key={job.id} job={job} />

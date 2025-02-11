@@ -2,6 +2,8 @@ package com.example.job_portal.service;
 
 import com.example.job_portal.model.Job;
 import com.example.job_portal.model.User;
+import com.example.job_portal.model.JobType;
+import com.example.job_portal.model.JobStatus;
 import com.example.job_portal.repository.JobRepository;
 import com.example.job_portal.repository.UserRepository;
 import com.example.job_portal.security.JwtUtil;
@@ -59,13 +61,33 @@ public class JobService {
         String username = jwtUtil.extractUsername(token.replace("Bearer ", ""));
         Optional<User> user = userRepository.findByUsername(username);
 
-        if (user.isEmpty() || !user.get().getRole().name().equals("RECRUITER")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only RECRUITER users can post job listings!");
+        System.out.println("Creating job for user: " + username);
+        
+        if (user.isEmpty()) {
+            System.out.println("User not found in database: " + username);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body("User not found: " + username);
         }
 
-        job.setRecruiter(user.get()); // ✅ Updated from `setOwner` to `setRecruiter`
+        System.out.println("User role from database: " + user.get().getRole().name());
+        
+        if (!user.get().getRole().name().equals("RECRUITER")) {
+            System.out.println("User does not have RECRUITER role: " + user.get().getRole().name());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body("User " + username + " does not have RECRUITER role. Current role: " + user.get().getRole().name());
+        }
 
-        // Ensure salary fields are correctly assigned (BigDecimal for PostgreSQL NUMERIC)
+        // Set default values if null
+        if (job.getJobType() == null) {
+            job.setJobType(JobType.FULL_TIME);
+        }
+        if (job.getStatus() == null) {
+            job.setStatus(JobStatus.OPEN);
+        }
+
+        job.setRecruiter(user.get());
+
+        // Ensure salary fields are correctly assigned
         if (job.getMinSalary() == null) job.setMinSalary(BigDecimal.ZERO);
         if (job.getMaxSalary() == null) job.setMaxSalary(BigDecimal.ZERO);
 

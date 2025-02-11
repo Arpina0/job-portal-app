@@ -1,5 +1,7 @@
 package com.example.job_portal.security;
 
+import com.example.job_portal.model.User;
+import com.example.job_portal.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -7,21 +9,28 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Collections;
+import java.util.Optional;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String SECRET_KEY = "yourSuperSecretKeyWhichIsAtLeast32CharactersLong";
+
+    private final UserRepository userRepository;
+
+    public JwtAuthenticationFilter(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
@@ -29,8 +38,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+                                  HttpServletResponse response,
+                                  FilterChain filterChain) throws ServletException, IOException {
         
         // Update CORS headers to allow both ports
         String origin = request.getHeader("Origin");
@@ -63,12 +72,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .getBody();
 
             String username = claims.getSubject();
-            UserDetails userDetails = new User(username, "", Collections.emptyList());
+            
+            // Fetch user from database
+            Optional<User> userOpt = userRepository.findByUsername(username);
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                // Create authority from user's role
+                SimpleGrantedAuthority authority = new SimpleGrantedAuthority(user.getRole().name());
+                
+                // Create UserDetails with the authority
+                UserDetails userDetails = org.springframework.security.core.userdetails.User
+                    .withUsername(username)
+                    .password("")
+                    .authorities(authority)
+                    .build();
 
-            UsernamePasswordAuthenticationToken authToken =
-                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-            SecurityContextHolder.getContext().setAuthentication(authToken);
+                UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+                
+                // Debug logging
+                System.out.println("User authenticated: " + username);
+                System.out.println("User authorities: " + userDetails.getAuthorities());
+            }
         } catch (Exception e) {
+            System.out.println("Authentication error: " + e.getMessage());
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.getWriter().write("Invalid or expired token");
             return;
