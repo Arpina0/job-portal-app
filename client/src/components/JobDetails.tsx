@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchJobDetails, clearSelectedJob } from '../store/slices/jobsSlice';
+import { fetchUserData } from '../store/slices/userSlice';
 import type { AppDispatch, RootState } from '../store';
 
 const JobDetails = () => {
@@ -10,6 +11,7 @@ const JobDetails = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { selectedJob, loading, error } = useSelector((state: RootState) => state.jobs);
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const currentUser = useSelector((state: RootState) => state.user.user);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -17,6 +19,7 @@ const JobDetails = () => {
       return;
     }
 
+    dispatch(fetchUserData());
     if (id) {
       dispatch(fetchJobDetails(parseInt(id)));
     }
@@ -25,6 +28,10 @@ const JobDetails = () => {
       dispatch(clearSelectedJob());
     };
   }, [dispatch, id, isAuthenticated, navigate]);
+
+  // Check if the current user is the recruiter
+  const isRecruiter = currentUser?.id === selectedJob?.recruiterId;
+  const isJobSeeker = currentUser?.role === 'JOB_SEEKER';
 
   const formatJobType = (type: string | undefined) => {
     return type?.replace('_', ' ') || 'FULL TIME';
@@ -128,9 +135,26 @@ const JobDetails = () => {
             >
               ← Back to Jobs
             </button>
-            <button className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-              Apply Now
-            </button>
+            <div className="flex gap-4">
+              {isRecruiter ? (
+                <button
+                  onClick={() => navigate(`/edit-job/${selectedJob.id}`)}
+                  className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                >
+                  Edit Job
+                </button>
+              ) : isJobSeeker ? (
+                <button 
+                  className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  onClick={() => {
+                    // Add your apply job logic here
+                    console.log('Applying for job:', selectedJob.id);
+                  }}
+                >
+                  Apply Now
+                </button>
+              ) : null}
+            </div>
           </div>
         </div>
       </div>
