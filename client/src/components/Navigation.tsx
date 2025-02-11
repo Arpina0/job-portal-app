@@ -47,7 +47,7 @@ const Navigation = () => {
               ) : (
                 <>
                   <span className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
-                    Welcome, {user.username}
+                    Welcome, {user?.username || 'User'}
                   </span>
                   <button
                     onClick={handleLogout}
@@ -56,6 +56,14 @@ const Navigation = () => {
                     Logout
                   </button>
                 </>
+              )}
+              {isAuthenticated && (
+                <Link
+                  to="/jobs"
+                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900"
+                >
+                  Jobs
+                </Link>
               )}
             </div>
           </div>

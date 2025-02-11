@@ -83,4 +83,27 @@ export const login = async (userData: LoginData): Promise<LoginResponse> => {
   }
 };
 
+export interface Job {
+  id: number;
+  title: string;
+  company: string;
+  location: string;
+  description: string;
+  requirements: string;
+  salary?: string;
+  postedDate: string;
+  type: 'FULL_TIME' | 'PART_TIME' | 'CONTRACT';
+  status: 'OPEN' | 'CLOSED';
+}
+
+export const fetchJobs = async (): Promise<Job[]> => {
+  try {
+    const response = await api.get<Job[]>('/jobs');
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching jobs:', error.response?.data);
+    throw new Error(error.response?.data?.message || 'Failed to fetch jobs');
+  }
+};
+
 export default api; 
