@@ -160,4 +160,37 @@ export const createJob = async (jobData: CreateJobData): Promise<Job> => {
   }
 };
 
+export const updateJob = async (id: number, jobData: CreateJobData): Promise<Job> => {
+  try {
+    console.log('Sending update request for job:', id);
+    
+    // Format the data to match backend expectations
+    const formattedData = {
+      title: jobData.title,
+      company: jobData.company,
+      location: jobData.location,
+      description: jobData.description,
+      requirements: jobData.requirements,
+      minSalary: jobData.minSalary,
+      maxSalary: jobData.maxSalary,
+      type: jobData.type,
+      status: jobData.status,
+      recruiter_id: jobData.recruiter_id
+    };
+
+    console.log('Update data being sent:', formattedData);
+    
+    const response = await api.put<Job>(`/jobs/${id}`, formattedData);
+    console.log('Update job response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error updating job:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
+    throw new Error(error.response?.data?.message || 'Failed to update job');
+  }
+};
+
 export default api; 

@@ -7,6 +7,7 @@ import Login from './components/Login';
 import JobListings from './components/JobListings';
 import JobDetails from './components/JobDetails';
 import CreateJob from './components/CreateJob';
+import EditJob from './components/EditJob';
 import type { RootState } from './store';
 
 function App() {
@@ -41,6 +42,10 @@ function App() {
             <Route 
               path="/create-job" 
               element={isAuthenticated ? <CreateJob /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/edit-job/:id" 
+              element={isAuthenticated ? <EditJob /> : <Navigate to="/login" />} 
             />
           </Routes>
         </main>

@@ -114,20 +114,23 @@ public class JobService {
         Job job = jobOpt.get();
         User user = userOpt.get();
 
-        if (!job.getRecruiter().getUsername().equals(user.getUsername())) { // ✅ Updated from `getOwner` to `getRecruiter`
+        if (!job.getRecruiter().getUsername().equals(user.getUsername())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only update your own job listings.");
         }
 
-        // Ensure jobDetails contains valid data before updating
+        // Update all fields
         if (jobDetails.getTitle() != null) job.setTitle(jobDetails.getTitle());
+        if (jobDetails.getCompany() != null) job.setCompany(jobDetails.getCompany());
         if (jobDetails.getDescription() != null) job.setDescription(jobDetails.getDescription());
+        if (jobDetails.getRequirements() != null) job.setRequirements(jobDetails.getRequirements());
         if (jobDetails.getLocation() != null) job.setLocation(jobDetails.getLocation());
         if (jobDetails.getMinSalary() != null) job.setMinSalary(jobDetails.getMinSalary());
         if (jobDetails.getMaxSalary() != null) job.setMaxSalary(jobDetails.getMaxSalary());
         if (jobDetails.getJobType() != null) job.setJobType(jobDetails.getJobType());
+        if (jobDetails.getStatus() != null) job.setStatus(jobDetails.getStatus());
 
-        jobRepository.save(job);
-        return ResponseEntity.ok("Job updated successfully.");
+        Job updatedJob = jobRepository.save(job);
+        return ResponseEntity.ok(updatedJob);
     }
 
     /**
@@ -148,7 +151,7 @@ public class JobService {
         Job job = jobOpt.get();
         User user = userOpt.get();
 
-        if (!job.getRecruiter().getUsername().equals(user.getUsername())) { // ✅ Updated from `getOwner` to `getRecruiter`
+        if (!job.getRecruiter().getUsername().equals(user.getUsername())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only delete your own job listings.");
         }
 
