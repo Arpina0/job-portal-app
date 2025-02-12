@@ -9,6 +9,7 @@ import JobDetails from './components/JobDetails';
 import CreateJob from './components/CreateJob';
 import EditJob from './components/EditJob';
 import ManageJobs from './components/ManageJobs';
+import ApplicationManagement from './components/ApplicationManagement';
 import type { RootState } from './store';
 
 function App() {
@@ -62,6 +63,14 @@ function App() {
               element={
                 isAuthenticated && user?.role === 'RECRUITER' 
                   ? <ManageJobs /> 
+                  : <Navigate to="/login" />
+              } 
+            />
+            <Route 
+              path="/applications/:jobId" 
+              element={
+                isAuthenticated && user?.role === 'RECRUITER' 
+                  ? <ApplicationManagement /> 
                   : <Navigate to="/login" />
               } 
             />
