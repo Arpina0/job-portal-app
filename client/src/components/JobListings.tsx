@@ -106,6 +106,12 @@ const JobListings = () => {
     }
   };
 
+  const handleClearSearch = () => {
+    setIsSearching(false);
+    setSearchResults([]);
+    setCurrentPage(0);
+  };
+
   const displayedJobs = isSearching ? searchResults : jobs;
 
   if (loading) {
@@ -140,7 +146,7 @@ const JobListings = () => {
         )}
       </div>
 
-      <JobSearch onSearch={handleSearch} />
+      <JobSearch onSearch={handleSearch} onClear={handleClearSearch} />
       
       {displayedJobs.length === 0 ? (
         <div className="bg-white rounded-lg shadow-md p-6">

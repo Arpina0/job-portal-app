@@ -1,14 +1,18 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { fetchAllJobs } from '../store/slices/jobsSlice';
 import type { AppDispatch, RootState } from '../store';
+import type { Job } from '../services/api';
+import JobSearch from './JobSearch';
 
 const ManageJobs = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { jobs, loading, error } = useSelector((state: RootState) => state.jobs);
   const currentUser = useSelector((state: RootState) => state.user.user);
+  const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     if (!currentUser || currentUser.role !== 'RECRUITER') {
@@ -19,15 +23,90 @@ const ManageJobs = () => {
     dispatch(fetchAllJobs());
   }, [dispatch, currentUser, navigate]);
 
-  // Filter jobs to only show those belonging to the current recruiter
-  const recruiterJobs = jobs.filter(job => job.recruiter_id === currentUser?.id);
-
   useEffect(() => {
-    // Log the filtered jobs for debugging
-    console.log('Current user:', currentUser);
-    console.log('All jobs:', jobs);
-    console.log('Filtered recruiter jobs:', recruiterJobs);
-  }, [jobs, currentUser, recruiterJobs]);
+    // Filter jobs to only show those belonging to the current recruiter
+    const recruiterJobs = jobs.filter(job => job.recruiter_id === currentUser?.id);
+    setFilteredJobs(recruiterJobs);
+  }, [jobs, currentUser]);
+
+  const handleSearch = (searchParams: any) => {
+    setIsSearching(true);
+    const recruiterJobs = jobs.filter(job => job.recruiter_id === currentUser?.id);
+    
+    let searchResults = recruiterJobs;
+
+    // Apply keyword search
+    if (searchParams.keyword) {
+      const keyword = searchParams.keyword.toLowerCase();
+      searchResults = searchResults.filter(job => 
+        job.title.toLowerCase().includes(keyword) ||
+        job.description.toLowerCase().includes(keyword) ||
+        job.company.toLowerCase().includes(keyword)
+      );
+    }
+
+    // Apply location filter
+    if (searchParams.location) {
+      const location = searchParams.location.toLowerCase();
+      searchResults = searchResults.filter(job =>
+        job.location.toLowerCase().includes(location)
+      );
+    }
+
+    // Apply job type filter
+    if (searchParams.jobType) {
+      searchResults = searchResults.filter(job =>
+        job.type === searchParams.jobType
+      );
+    }
+
+    // Apply salary filters with null checks
+    if (searchParams.minSalary) {
+      const minSalary = parseFloat(searchParams.minSalary);
+      searchResults = searchResults.filter(job =>
+        (job.minSalary || 0) >= minSalary
+      );
+    }
+    if (searchParams.maxSalary) {
+      const maxSalary = parseFloat(searchParams.maxSalary);
+      searchResults = searchResults.filter(job =>
+        (job.maxSalary || Infinity) <= maxSalary
+      );
+    }
+
+    // Apply status filter
+    if (searchParams.status) {
+      searchResults = searchResults.filter(job =>
+        job.status === searchParams.status
+      );
+    }
+
+    // Apply sorting
+    if (searchParams.sortBy) {
+      searchResults.sort((a: Job, b: Job) => {
+        const direction = searchParams.sortDirection === 'DESC' ? -1 : 1;
+        
+        switch (searchParams.sortBy) {
+          case 'postedDate':
+            return direction * (new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime());
+          case 'minSalary':
+            return direction * ((a.minSalary || 0) - (b.minSalary || 0));
+          case 'title':
+            return direction * a.title.localeCompare(b.title);
+          default:
+            return 0;
+        }
+      });
+    }
+
+    setFilteredJobs(searchResults);
+  };
+
+  const handleClearSearch = () => {
+    setIsSearching(false);
+    const recruiterJobs = jobs.filter(job => job.recruiter_id === currentUser?.id);
+    setFilteredJobs(recruiterJobs);
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -67,13 +146,15 @@ const ManageJobs = () => {
         </button>
       </div>
 
-      {recruiterJobs.length === 0 ? (
+      <JobSearch onSearch={handleSearch} onClear={handleClearSearch} />
+
+      {filteredJobs.length === 0 ? (
         <div className="bg-white rounded-lg shadow-md p-6">
           <p className="text-gray-600">You haven't posted any jobs yet.</p>
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-1">
-          {recruiterJobs.map((job) => (
+          {filteredJobs.map((job) => (
             <div key={job.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-200">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-grow">

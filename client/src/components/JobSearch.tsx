@@ -1,20 +1,24 @@
 import React, { useState } from 'react';
-import { JobType } from '../types';
+import { JobType, JobStatus } from '../types';
 
 interface JobSearchProps {
   onSearch: (searchParams: any) => void;
+  onClear: () => void;
 }
 
-const JobSearch: React.FC<JobSearchProps> = ({ onSearch }) => {
-  const [searchParams, setSearchParams] = useState({
+const JobSearch: React.FC<JobSearchProps> = ({ onSearch, onClear }) => {
+  const initialSearchParams = {
     keyword: '',
     location: '',
     minSalary: '',
     maxSalary: '',
     jobType: '',
+    status: '',
     sortBy: 'postedDate',
     sortDirection: 'DESC'
-  });
+  };
+
+  const [searchParams, setSearchParams] = useState(initialSearchParams);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -31,9 +35,15 @@ const JobSearch: React.FC<JobSearchProps> = ({ onSearch }) => {
       ...searchParams,
       minSalary: searchParams.minSalary ? parseFloat(searchParams.minSalary) : undefined,
       maxSalary: searchParams.maxSalary ? parseFloat(searchParams.maxSalary) : undefined,
-      jobType: searchParams.jobType || undefined
+      jobType: searchParams.jobType || undefined,
+      status: searchParams.status || undefined
     };
     onSearch(params);
+  };
+
+  const handleClear = () => {
+    setSearchParams(initialSearchParams);
+    onClear();
   };
 
   return (
@@ -91,6 +101,25 @@ const JobSearch: React.FC<JobSearchProps> = ({ onSearch }) => {
           </select>
         </div>
 
+        {/* Status */}
+        <div>
+          <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+            Status
+          </label>
+          <select
+            id="status"
+            name="status"
+            value={searchParams.status}
+            onChange={handleChange}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          >
+            <option value="">All Status</option>
+            <option value="OPEN">Open</option>
+            <option value="CLOSED">Closed</option>
+            <option value="DRAFT">Draft</option>
+          </select>
+        </div>
+
         {/* Salary Range */}
         <div>
           <label htmlFor="minSalary" className="block text-sm font-medium text-gray-700 mb-1">
@@ -141,12 +170,19 @@ const JobSearch: React.FC<JobSearchProps> = ({ onSearch }) => {
         </div>
       </div>
 
-      <div className="mt-4 flex justify-end">
+      <div className="mt-4 flex justify-end space-x-4">
+        <button
+          type="button"
+          onClick={handleClear}
+          className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+        >
+          Clear
+        </button>
         <button
           type="submit"
           className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
         >
-          Search Jobs
+          Search
         </button>
       </div>
     </form>
