@@ -193,4 +193,35 @@ export const updateJob = async (id: number, jobData: CreateJobData): Promise<Job
   }
 };
 
+export interface JobApplication {
+  id: number;
+  job_id: number;
+  applicant_id: number;
+  status: string;
+}
+
+export const applyForJob = async (jobId: number): Promise<void> => {
+  try {
+    const response = await api.post(`/applications/${jobId}`);
+    console.log('Application response:', response.data);
+  } catch (error: any) {
+    console.error('Application error:', error);
+    throw new Error(error.response?.data || 'Failed to apply for job');
+  }
+};
+
+export const checkJobApplication = async (jobId: number): Promise<boolean> => {
+  try {
+    console.log('Checking applications for job:', jobId);
+    const response = await api.get<JobApplication[]>('/applications');
+    console.log('All user applications:', response.data);
+    const hasApplied = response.data.some(app => app.job_id === jobId);
+    console.log('Has applied:', hasApplied);
+    return hasApplied;
+  } catch (error: any) {
+    console.error('Error checking job application:', error);
+    return false;
+  }
+};
+
 export default api; 

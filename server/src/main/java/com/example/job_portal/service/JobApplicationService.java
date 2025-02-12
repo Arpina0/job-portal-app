@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 
 
@@ -45,24 +46,33 @@ public class JobApplicationService {
         Optional<Job> jobOpt = jobRepository.findById(jobId);
 
         if (userOpt.isEmpty() || jobOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User or Job not found.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body("User or Job not found.");
         }
 
         User user = userOpt.get();
         Job job = jobOpt.get();
 
-        // Prevent Recruiters from applying
-        if (user.getRole().name().equals("RECRUITER")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Recruiters cannot apply for jobs.");
+        // Check if user is a JOB_SEEKER
+        if (!user.getRole().name().equals("JOB_SEEKER")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body("Only job seekers can apply for jobs.");
+        }
+
+        // Check if user has already applied
+        boolean hasApplied = jobApplicationRepository.findByApplicantAndJob(user, job).isPresent();
+        if (hasApplied) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("You have already applied for this job.");
         }
 
         JobApplication application = new JobApplication();
         application.setApplicant(user);
         application.setJob(job);
-        application.setStatus("Pending");
+        application.setStatus("PENDING");
 
         jobApplicationRepository.save(application);
-        return ResponseEntity.ok("Job application submitted successfully.");
+        return ResponseEntity.ok("Application submitted successfully.");
     }
 
     public ResponseEntity<?> getUserApplications(String token) {
@@ -76,7 +86,18 @@ public class JobApplicationService {
         User user = userOpt.get();
         List<JobApplication> applications = jobApplicationRepository.findByApplicant(user);
         
-        return ResponseEntity.ok(applications);
+        // Transform to match frontend expectations
+        List<Map<String, Object>> response = applications.stream().map(application -> {
+            Map<String, Object> data = new HashMap<>();
+            data.put("id", application.getId());
+            data.put("job_id", application.getJob().getId());
+            data.put("applicant_id", application.getApplicant().getId());
+            data.put("status", application.getStatus());
+            return data;
+        }).collect(Collectors.toList());
+
+        System.out.println("User applications for " + username + ": " + response); // Debug log
+        return ResponseEntity.ok(response);
     }
 
     public ResponseEntity<?> getJobApplications(String token, Long jobId) {

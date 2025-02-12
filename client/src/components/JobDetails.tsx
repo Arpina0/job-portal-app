@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchJobDetails, clearSelectedJob, deleteJob } from '../store/slices/jobsSlice';
 import { fetchUserData } from '../store/slices/userSlice';
 import type { AppDispatch, RootState } from '../store';
+import { applyForJob, checkJobApplication } from '../services/api';
 
 const JobDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -12,6 +13,8 @@ const JobDetails = () => {
   const { selectedJob, loading, error } = useSelector((state: RootState) => state.jobs);
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const currentUser = useSelector((state: RootState) => state.user.user);
+  const [hasApplied, setHasApplied] = useState(false);
+  const [applying, setApplying] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -38,6 +41,19 @@ const JobDetails = () => {
     };
   }, [dispatch, id, isAuthenticated, navigate]);
 
+  // Add this useEffect to check if user has already applied
+  useEffect(() => {
+    if (selectedJob && currentUser?.role === 'JOB_SEEKER') {
+      console.log('Checking application status for job:', selectedJob.id);
+      checkJobApplication(selectedJob.id)
+        .then(applied => {
+          console.log('Application status:', applied);
+          setHasApplied(applied);
+        })
+        .catch(error => console.error('Error checking application:', error));
+    }
+  }, [selectedJob?.id, currentUser?.role]);
+
   // Move these checks inside the render where we know selectedJob exists
   const checkIsRecruiter = () => {
     console.log("selected job", selectedJob);
@@ -61,6 +77,21 @@ const JobDetails = () => {
 
   const formatJobType = (type: string | undefined) => {
     return type?.replace('_', ' ') || 'FULL TIME';
+  };
+
+  const handleApply = async () => {
+    if (!selectedJob) return;
+    
+    try {
+      setApplying(true);
+      await applyForJob(selectedJob.id);
+      setHasApplied(true);
+      alert('Successfully applied for the job!');
+    } catch (error: any) {
+      alert(error.message || 'Failed to apply for job');
+    } finally {
+      setApplying(false);
+    }
   };
 
   if (loading) {
@@ -176,13 +207,15 @@ const JobDetails = () => {
                 </>
               ) : isJobSeeker ? (
                 <button 
-                  className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                  onClick={() => {
-                    // Add your apply job logic here
-                    console.log('Applying for job:', selectedJob.id);
-                  }}
+                  className={`px-6 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                    hasApplied 
+                      ? 'bg-gray-400 cursor-not-allowed' 
+                      : 'bg-indigo-600 hover:bg-indigo-700 text-white focus:ring-indigo-500'
+                  }`}
+                  onClick={handleApply}
+                  disabled={hasApplied || applying}
                 >
-                  Apply Now
+                  {applying ? 'Applying...' : hasApplied ? 'Already Applied' : 'Apply Now'}
                 </button>
               ) : null}
             </div>
