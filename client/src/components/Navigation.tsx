@@ -73,6 +73,14 @@ const Navigation = () => {
                       Manage Listings
                     </Link>
                   )}
+                  {user?.role === 'JOB_SEEKER' && (
+                    <Link
+                      to="/my-applications"
+                      className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900"
+                    >
+                      My Applications
+                    </Link>
+                  )}
                 </>
               )}
             </div>
