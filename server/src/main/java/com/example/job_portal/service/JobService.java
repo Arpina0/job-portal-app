@@ -7,6 +7,7 @@ import com.example.job_portal.model.JobType;
 import com.example.job_portal.model.JobStatus;
 import com.example.job_portal.repository.JobRepository;
 import com.example.job_portal.repository.UserRepository;
+import com.example.job_portal.repository.JobApplicationRepository;
 import com.example.job_portal.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -16,6 +17,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -26,12 +28,14 @@ public class JobService {
 
     private final JobRepository jobRepository;
     private final UserRepository userRepository;
+    private final JobApplicationRepository jobApplicationRepository;
     private final JwtUtil jwtUtil;
 
     @Autowired
-    public JobService(JobRepository jobRepository, UserRepository userRepository, JwtUtil jwtUtil) {
+    public JobService(JobRepository jobRepository, UserRepository userRepository, JobApplicationRepository jobApplicationRepository, JwtUtil jwtUtil) {
         this.jobRepository = jobRepository;
         this.userRepository = userRepository;
+        this.jobApplicationRepository = jobApplicationRepository;
         this.jwtUtil = jwtUtil;
     }
 
@@ -144,6 +148,7 @@ public class JobService {
      * @param token Authorization token.
      * @return Success or error message.
      */
+    @Transactional
     public ResponseEntity<String> deleteJob(Long id, String token) {
         String username = jwtUtil.extractUsername(token.replace("Bearer ", ""));
         Optional<User> userOpt = userRepository.findByUsername(username);
@@ -160,8 +165,16 @@ public class JobService {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only delete your own job listings.");
         }
 
-        jobRepository.delete(job);
-        return ResponseEntity.ok("Job deleted successfully.");
+        try {
+            // Delete all associated job applications first
+            jobApplicationRepository.deleteByJob(job);
+            // Then delete the job
+            jobRepository.delete(job);
+            return ResponseEntity.ok("Job deleted successfully.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Failed to delete job: " + e.getMessage());
+        }
     }
 
     /**

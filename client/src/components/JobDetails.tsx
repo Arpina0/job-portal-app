@@ -67,10 +67,11 @@ const JobDetails = () => {
     
     if (window.confirm('Are you sure you want to delete this job?')) {
       try {
-        await dispatch(deleteJob(selectedJob.id));
+        await dispatch(deleteJob(selectedJob.id)).unwrap();
         navigate('/jobs');
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to delete job:', error);
+        alert(error.message || 'Failed to delete job');
       }
     }
   };

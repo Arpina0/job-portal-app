@@ -132,7 +132,10 @@ export const deleteJobById = async (id: number): Promise<void> => {
     await api.delete(`/jobs/${id}`);
   } catch (error: any) {
     console.error('Error deleting job:', error.response?.data);
-    throw new Error(error.response?.data?.message || 'Failed to delete job');
+    if (error.response?.status === 403) {
+      throw new Error('You can only delete your own job listings.');
+    }
+    throw new Error(error.response?.data || 'Failed to delete job');
   }
 };
 

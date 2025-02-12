@@ -14,4 +14,5 @@ public interface JobApplicationRepository extends JpaRepository<JobApplication, 
     List<JobApplication> findByApplicant(User applicant);
     List<JobApplication> findByJob(Job job);
     Optional<JobApplication> findByApplicantAndJob(User applicant, Job job);
+    void deleteByJob(Job job);
 }
