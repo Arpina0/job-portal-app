@@ -127,4 +127,10 @@ public class Job {
     public void setStatusString(String status) {
         this.status = status != null ? JobStatus.valueOf(status) : JobStatus.OPEN;
     }
+
+    // Add this method to expose recruiter_id in JSON
+    @JsonProperty("recruiter_id")
+    public Long getRecruiterId() {
+        return recruiter != null ? recruiter.getId() : null;
+    }
 }

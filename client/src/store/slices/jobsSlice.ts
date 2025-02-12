@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { fetchJobs, fetchJobById, Job } from '../../services/api';
+import { fetchJobs, fetchJobById, Job, deleteJobById } from '../../services/api';
 
 interface JobsState {
   jobs: Job[];
@@ -33,6 +33,18 @@ export const fetchJobDetails = createAsyncThunk(
     try {
       const job = await fetchJobById(id);
       return job;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const deleteJob = createAsyncThunk(
+  'jobs/deleteJob',
+  async (id: number, { rejectWithValue }) => {
+    try {
+      await deleteJobById(id);
+      return id;
     } catch (error: any) {
       return rejectWithValue(error.message);
     }
@@ -75,6 +87,20 @@ const jobsSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchJobDetails.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(deleteJob.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteJob.fulfilled, (state, action) => {
+        state.loading = false;
+        state.jobs = state.jobs.filter(job => job.id !== action.payload);
+        state.selectedJob = null;
+        state.error = null;
+      })
+      .addCase(deleteJob.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

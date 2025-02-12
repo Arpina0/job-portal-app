@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchJobDetails, clearSelectedJob } from '../store/slices/jobsSlice';
+import { fetchJobDetails, clearSelectedJob, deleteJob } from '../store/slices/jobsSlice';
 import { fetchUserData } from '../store/slices/userSlice';
 import type { AppDispatch, RootState } from '../store';
 
@@ -19,9 +19,18 @@ const JobDetails = () => {
       return;
     }
 
-    dispatch(fetchUserData());
+    // First fetch the job details
     if (id) {
-      dispatch(fetchJobDetails(parseInt(id)));
+      console.log('Fetching job details for ID:', id);
+      dispatch(fetchJobDetails(parseInt(id)))
+        .unwrap()
+        .then((jobData) => {
+          console.log('Successfully fetched job details:', jobData);
+          dispatch(fetchUserData());
+        })
+        .catch((error) => {
+          console.error('Error fetching job details:', error);
+        });
     }
 
     return () => {
@@ -29,9 +38,26 @@ const JobDetails = () => {
     };
   }, [dispatch, id, isAuthenticated, navigate]);
 
-  // Check if the current user is the recruiter
-  const isRecruiter = currentUser?.id === selectedJob?.recruiterId;
-  const isJobSeeker = currentUser?.role === 'JOB_SEEKER';
+  // Move these checks inside the render where we know selectedJob exists
+  const checkIsRecruiter = () => {
+    console.log("selected job", selectedJob);
+    console.log("Current User ID:", currentUser?.id);
+    console.log("Job Recruiter ID:", selectedJob?.recruiter_id);
+    return currentUser?.id === selectedJob?.recruiter_id;
+  };
+
+  const handleDeleteJob = async () => {
+    if (!selectedJob) return;
+    
+    if (window.confirm('Are you sure you want to delete this job?')) {
+      try {
+        await dispatch(deleteJob(selectedJob.id));
+        navigate('/jobs');
+      } catch (error) {
+        console.error('Failed to delete job:', error);
+      }
+    }
+  };
 
   const formatJobType = (type: string | undefined) => {
     return type?.replace('_', ' ') || 'FULL TIME';
@@ -59,17 +85,14 @@ const JobDetails = () => {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white shadow-lg rounded-lg p-6">
-          <p className="text-gray-600">Job not found</p>
-          <button
-            onClick={() => navigate('/jobs')}
-            className="mt-4 text-indigo-600 hover:text-indigo-800"
-          >
-            ← Back to Jobs
-          </button>
+          <p className="text-gray-600">Loading job details...</p>
         </div>
       </div>
     );
   }
+
+  const isRecruiter = checkIsRecruiter();
+  const isJobSeeker = currentUser?.role === 'JOB_SEEKER';
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -137,12 +160,20 @@ const JobDetails = () => {
             </button>
             <div className="flex gap-4">
               {isRecruiter ? (
-                <button
-                  onClick={() => navigate(`/edit-job/${selectedJob.id}`)}
-                  className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                >
-                  Edit Job
-                </button>
+                <>
+                  <button
+                    onClick={() => navigate(`/edit-job/${selectedJob.id}`)}
+                    className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  >
+                    Edit Job
+                  </button>
+                  <button
+                    onClick={handleDeleteJob}
+                    className="bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  >
+                    Delete Job
+                  </button>
+                </>
               ) : isJobSeeker ? (
                 <button 
                   className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"

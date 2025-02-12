@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { fetchAllJobs } from '../store/slices/jobsSlice';
 import type { AppDispatch } from '../store'; // Import AppDispatch type
+import { RootState } from '../store'; // Import RootState type
+import { createJob } from '../services/api';  // Import the createJob function
+import { fetchUserData } from '../store/slices/userSlice';
 
 axios.defaults.baseURL = 'http://localhost:8080';  // Backend server URL'iniz
 
@@ -22,6 +25,17 @@ const CreateJob = () => {
 
     const dispatch = useDispatch<AppDispatch>(); // Use the AppDispatch type
     const navigate = useNavigate();
+    const currentUser = useSelector((state: RootState) => state.user.user);
+
+    useEffect(() => {
+        console.log('CreateJob component mounted');
+        if (!currentUser) {
+            console.log('No user data found, fetching...');
+            dispatch(fetchUserData());
+        } else {
+            console.log('Current user data:', currentUser);
+        }
+    }, [currentUser, dispatch]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -31,64 +45,37 @@ const CreateJob = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem('token');
+            console.log('Current user:', currentUser); // Add this log
             
-            // Decode JWT token to see the username
-            const base64Url = token!.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-            }).join(''));
-            console.log('Decoded token:', JSON.parse(jsonPayload));
-
-            // Add this to check user role
-            try {
-                const userResponse = await axios.get('/api/users/me', {
-                    headers: {
-                        Authorization: token?.startsWith('Bearer ') ? token : `Bearer ${token}`,
-                    }
-                });
-                console.log('Current user details:', userResponse.data);
-            } catch (error) {
-                console.error('Error fetching user details:', error);
+            if (!currentUser?.id) {
+                console.error('No user ID found');
+                return;
             }
 
-            console.log('Token being sent:', token);
-
-            // Log the data being sent
-            console.log('Sending job data:', {
+            const jobDataToSend = {
                 ...jobData,
                 minSalary: parseFloat(jobData.minSalary),
                 maxSalary: parseFloat(jobData.maxSalary),
-                type: jobData.type || 'FULL_TIME', // Ensure type is never null
-                status: jobData.status || 'OPEN'   // Ensure status is never null
-            });
+                type: jobData.type || 'FULL_TIME',
+                status: jobData.status || 'OPEN',
+                recruiter_id: currentUser.id
+            };
 
-            const response = await axios.post('/api/jobs', {
-                ...jobData,
-                minSalary: parseFloat(jobData.minSalary),
-                maxSalary: parseFloat(jobData.maxSalary),
-                type: jobData.type,          // Already a string
-                status: jobData.status       // Already a string
-            }, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: token?.startsWith('Bearer ') ? token : `Bearer ${token}`,
-                },
-            });
-            console.log('Response:', response.data);
+            console.log('Preparing to send job data:', jobDataToSend);
+
+            // Use the createJob function from our api service
+            const response = await createJob(jobDataToSend);
+            console.log('Job created successfully:', response);
+
             dispatch(fetchAllJobs());
             navigate('/jobs');
         } catch (error: any) {
-            console.log('Job Data:', jobData);
+            console.error('Failed to create job:', error);
             console.error('Error details:', {
-                status: error.response?.status,
-                message: error.response?.data,
-                headers: error.response?.headers,
-                fullError: error.response
+                message: error.message,
+                response: error.response?.data
             });
-            
-            alert(error.response?.data || 'An error occurred while creating the job');
+            alert(error.message || 'An error occurred while creating the job');
         }
     };
 

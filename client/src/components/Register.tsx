@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { registerUser, clearError } from '../store/slices/authSlice';
 import type { AppDispatch, RootState } from '../store';
-import { register, RegisterData, UserRole } from '../services/api';
+import { RegisterData, UserRole } from '../services/api';
 
 const Register = () => {
   const navigate = useNavigate();

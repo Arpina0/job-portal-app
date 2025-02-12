@@ -93,7 +93,7 @@ export interface Job {
   type: string;
   status: string;
   postedDate: string;
-  recruiterId: number;
+  recruiter_id: number;
   description: string;
   requirements: string;
 }
@@ -102,6 +102,7 @@ export interface Job {
 export const fetchJobs = async (): Promise<Job[]> => {
   try {
     const response = await api.get<Job[]>('/jobs');
+    console.log('All jobs response:', response.data);
     return response.data;
   } catch (error: any) {
     console.error('Error fetching jobs:', error.response?.data);
@@ -112,10 +113,50 @@ export const fetchJobs = async (): Promise<Job[]> => {
 export const fetchJobById = async (id: number): Promise<Job> => {
   try {
     const response = await api.get<Job>(`/jobs/${id}`);
+    console.log('Raw job details response:', response);
+    console.log('Job details data:', response.data);
+    
+    if (!response.data.recruiter_id) {
+      console.warn('No recruiter_id in job details response:', response.data);
+    }
+    
     return response.data;
   } catch (error: any) {
     console.error('Error fetching job details:', error.response?.data);
     throw new Error(error.response?.data?.message || 'Failed to fetch job details');
+  }
+};
+
+export const deleteJobById = async (id: number): Promise<void> => {
+  try {
+    await api.delete(`/jobs/${id}`);
+  } catch (error: any) {
+    console.error('Error deleting job:', error.response?.data);
+    throw new Error(error.response?.data?.message || 'Failed to delete job');
+  }
+};
+
+export interface CreateJobData {
+  title: string;
+  company: string;
+  location: string;
+  description: string;
+  requirements: string;
+  minSalary?: number;
+  maxSalary?: number;
+  type: string;
+  recruiter_id: number;
+  status: string;
+}
+
+export const createJob = async (jobData: CreateJobData): Promise<Job> => {
+  try {
+    const response = await api.post<Job>('/jobs', jobData);
+    console.log('Create job response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error creating job:', error.response?.data);
+    throw new Error(error.response?.data?.message || 'Failed to create job');
   }
 };
 
