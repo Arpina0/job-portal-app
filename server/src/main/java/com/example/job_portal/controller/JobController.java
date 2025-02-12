@@ -1,8 +1,10 @@
 package com.example.job_portal.controller;
 
+import com.example.job_portal.dto.JobSearchDTO;
 import com.example.job_portal.model.Job;
 import com.example.job_portal.service.JobService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -79,5 +81,15 @@ public class JobController {
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteJob(@PathVariable Long id, @RequestHeader("Authorization") String token) {
         return jobService.deleteJob(id, token);
+    }
+
+    /**
+     * Search jobs with filters and pagination
+     * @param searchDTO Search parameters
+     * @return Page of jobs matching the search criteria
+     */
+    @GetMapping("/search")
+    public ResponseEntity<Page<Job>> searchJobs(JobSearchDTO searchDTO) {
+        return ResponseEntity.ok(jobService.searchJobs(searchDTO));
     }
 }

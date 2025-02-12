@@ -1,5 +1,6 @@
 package com.example.job_portal.service;
 
+import com.example.job_portal.dto.JobSearchDTO;
 import com.example.job_portal.model.Job;
 import com.example.job_portal.model.User;
 import com.example.job_portal.model.JobType;
@@ -8,6 +9,10 @@ import com.example.job_portal.repository.JobRepository;
 import com.example.job_portal.repository.UserRepository;
 import com.example.job_portal.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -157,5 +162,41 @@ public class JobService {
 
         jobRepository.delete(job);
         return ResponseEntity.ok("Job deleted successfully.");
+    }
+
+    /**
+     * Search jobs with filters and pagination
+     * @param searchDTO Search parameters
+     * @return Page of jobs matching the search criteria
+     */
+    public Page<Job> searchJobs(JobSearchDTO searchDTO) {
+        // Create Pageable object for pagination and sorting
+        Sort sort = Sort.by(
+            searchDTO.getSortDirection().equalsIgnoreCase("ASC") ? 
+            Sort.Direction.ASC : Sort.Direction.DESC,
+            searchDTO.getSortBy()
+        );
+        
+        Pageable pageable = PageRequest.of(
+            searchDTO.getPage(),
+            searchDTO.getSize(),
+            sort
+        );
+
+        // Convert salary values to BigDecimal if present
+        BigDecimal minSalary = searchDTO.getMinSalary() != null ? 
+            BigDecimal.valueOf(searchDTO.getMinSalary()) : null;
+        BigDecimal maxSalary = searchDTO.getMaxSalary() != null ? 
+            BigDecimal.valueOf(searchDTO.getMaxSalary()) : null;
+
+        // Perform the search
+        return jobRepository.searchJobs(
+            searchDTO.getKeyword(),
+            searchDTO.getLocation(),
+            searchDTO.getJobType(),
+            minSalary,
+            maxSalary,
+            pageable
+        );
     }
 }

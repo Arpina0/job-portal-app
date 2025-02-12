@@ -1,9 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { fetchAllJobs } from '../store/slices/jobsSlice';
 import type { AppDispatch, RootState } from '../store';
 import type { Job } from '../services/api';
-import { useNavigate } from 'react-router-dom';
+import { searchJobs } from '../services/api';
+import JobSearch from './JobSearch';
 
 const JobCard = ({ job }: { job: Job }) => {
   const navigate = useNavigate();
@@ -67,22 +69,44 @@ const JobCard = ({ job }: { job: Job }) => {
 
 const JobListings = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const { jobs, loading, error } = useSelector((state: RootState) => state.jobs);
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
-  const navigate = useNavigate();
   const userRole = useSelector((state: RootState) => state.user.user?.role);
-  console.log('User Role pritn:', userRole);
+  const [searchResults, setSearchResults] = useState<Job[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
-    console.log('JobListings mounted, authenticated:', isAuthenticated);
-    if (isAuthenticated) {
+    if (isAuthenticated && !isSearching) {
       dispatch(fetchAllJobs());
     }
-  }, [dispatch, isAuthenticated]);
+  }, [dispatch, isAuthenticated, isSearching]);
 
-  console.log('JobListings render state:', { loading, error, jobsCount: jobs.length });
-  console.log('User Role:', userRole);
-  console.log('Is Recruiter:', userRole === 'RECRUITER');
+  const handleSearch = async (searchParams: any) => {
+    try {
+      setIsSearching(true);
+      const response = await searchJobs({
+        ...searchParams,
+        page: currentPage,
+        size: 10
+      });
+      setSearchResults(response.content);
+      setTotalPages(response.totalPages);
+    } catch (error) {
+      console.error('Error searching jobs:', error);
+    }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    if (isSearching) {
+      handleSearch({ page: newPage });
+    }
+  };
+
+  const displayedJobs = isSearching ? searchResults : jobs;
 
   if (loading) {
     return (
@@ -102,17 +126,6 @@ const JobListings = () => {
     );
   }
 
-  if (!jobs.length) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Job Listings</h1>
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <p className="text-gray-600">No jobs found.</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex justify-between items-center mb-4">
@@ -126,12 +139,43 @@ const JobListings = () => {
           </button>
         )}
       </div>
+
+      <JobSearch onSearch={handleSearch} />
       
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {jobs.map((job) => (
-          <JobCard key={job.id} job={job} />
-        ))}
-      </div>
+      {displayedJobs.length === 0 ? (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <p className="text-gray-600">No jobs found.</p>
+        </div>
+      ) : (
+        <>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {displayedJobs.map((job) => (
+              <JobCard key={job.id} job={job} />
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-6 flex justify-center">
+              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handlePageChange(i)}
+                    className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                      currentPage === i
+                        ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
+                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+              </nav>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };

@@ -224,4 +224,30 @@ export const checkJobApplication = async (jobId: number): Promise<boolean> => {
   }
 };
 
+export interface SearchParams {
+  keyword?: string;
+  location?: string;
+  minSalary?: number;
+  maxSalary?: number;
+  jobType?: string;
+  sortBy?: string;
+  sortDirection?: string;
+  page?: number;
+  size?: number;
+}
+
+export const searchJobs = async (params: SearchParams) => {
+  const queryParams = new URLSearchParams();
+  
+  // Add all non-undefined parameters to the query string
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined) {
+      queryParams.append(key, value.toString());
+    }
+  });
+
+  const response = await api.get(`/jobs/search?${queryParams.toString()}`);
+  return response.data;
+};
+
 export default api; 
