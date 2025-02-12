@@ -58,12 +58,22 @@ const Navigation = () => {
                 </>
               )}
               {isAuthenticated && (
-                <Link
-                  to="/jobs"
-                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900"
-                >
-                  Jobs
-                </Link>
+                <>
+                  <Link
+                    to="/jobs"
+                    className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900"
+                  >
+                    Jobs
+                  </Link>
+                  {user?.role === 'RECRUITER' && (
+                    <Link
+                      to="/manage-jobs"
+                      className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900"
+                    >
+                      Manage Listings
+                    </Link>
+                  )}
+                </>
               )}
             </div>
           </div>

@@ -8,10 +8,12 @@ import JobListings from './components/JobListings';
 import JobDetails from './components/JobDetails';
 import CreateJob from './components/CreateJob';
 import EditJob from './components/EditJob';
+import ManageJobs from './components/ManageJobs';
 import type { RootState } from './store';
 
 function App() {
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { user } = useSelector((state: RootState) => state.user);
 
   return (
     <Router>
@@ -41,11 +43,27 @@ function App() {
             />
             <Route 
               path="/create-job" 
-              element={isAuthenticated ? <CreateJob /> : <Navigate to="/login" />} 
+              element={
+                isAuthenticated && user?.role === 'RECRUITER' 
+                  ? <CreateJob /> 
+                  : <Navigate to="/login" />
+              } 
             />
             <Route 
               path="/edit-job/:id" 
-              element={isAuthenticated ? <EditJob /> : <Navigate to="/login" />} 
+              element={
+                isAuthenticated && user?.role === 'RECRUITER' 
+                  ? <EditJob /> 
+                  : <Navigate to="/login" />
+              } 
+            />
+            <Route 
+              path="/manage-jobs" 
+              element={
+                isAuthenticated && user?.role === 'RECRUITER' 
+                  ? <ManageJobs /> 
+                  : <Navigate to="/login" />
+              } 
             />
           </Routes>
         </main>
